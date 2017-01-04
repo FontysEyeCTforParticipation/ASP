@@ -18,27 +18,113 @@ namespace EyeCTforParticipation.Controllers
         {
             UserModel user = (UserModel)Session["user"];
 
-            if (user != null && user.Role == UserRole.HelpSeeker)
+            if (user != null)
             {
-                HelpRequestModel helpRequest = helpRequestRepository.Get(id);
-
-                if (helpRequest != null)
+                switch (user.Role)
                 {
-                    List<ApplicationModel> applications = helpRequestRepository.GetApplications(helpRequest.Id, user.Id);
+                    case UserRole.HelpSeeker:
+                        HelpRequestModel helpRequest = helpRequestRepository.Get(id);
 
-                    return Json(new
-                    {
-                        Success = true,
-                        HelpRequest = helpRequest,
-                        Applications = applications
-                    }, JsonRequestBehavior.AllowGet);
+                        if (helpRequest != null)
+                        {
+                            List<ApplicationModel> applications = helpRequestRepository.GetApplications(helpRequest.Id, user.Id);
+
+                            return Json(new
+                            {
+                                helpRequest = helpRequest,
+                                applications = applications
+                            }, JsonRequestBehavior.AllowGet);
+                        }
+                        break;
                 }
             }
 
-            return Json(new
+            return Json(null, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public void Open(int id)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null && user.Role == UserRole.HelpSeeker)
             {
-                Success = false
-            }, JsonRequestBehavior.AllowGet);
+                helpRequestRepository.Open(id, user.Id);
+            }
+        }
+
+        [HttpPost]
+        public void Close(int id)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null && user.Role == UserRole.HelpSeeker)
+            {
+                helpRequestRepository.Close(id, user.Id);
+            }
+        }
+
+        [HttpPost]
+        public void Save(string title, HelpRequestUrgency urgency, string address, string content, int id = 0)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null && user.Role == UserRole.HelpSeeker)
+            {
+                helpRequestRepository.Save(new HelpRequestModel
+                {
+                    Id = id,
+                    Title = title,
+                    Urgency = urgency,
+                    Address = address,
+                    Content = content,
+                    HelpSeeker = new UserModel
+                    {
+                        Id = user.Id
+                    }
+                });
+            }
+        }
+
+        [HttpPost]
+        public void Interview(int applicationId)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null && user.Role == UserRole.HelpSeeker)
+            {
+                helpRequestRepository.InterviewApplication(applicationId, user.Id);
+            }
+        }
+
+        [HttpPost]
+        public void Approve(int applicationId)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null && user.Role == UserRole.HelpSeeker)
+            {
+                helpRequestRepository.ApproveApplication(applicationId, user.Id);
+            }
+        }
+
+        [HttpPost]
+        public void Cancel(int applicationId)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null)
+            {
+                switch (user.Role)
+                {
+                    case UserRole.Volunteer:
+                        helpRequestRepository.CancelApplication(applicationId, user.Id);
+                        break;
+                    case UserRole.HelpSeeker:
+                        helpRequestRepository.CancelApplicationAsHelpSeeker(applicationId, user.Id);
+                        break;
+                }
+            }
         }
     }
 }

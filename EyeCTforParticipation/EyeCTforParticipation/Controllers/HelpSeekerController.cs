@@ -26,5 +26,17 @@ namespace EyeCTforParticipation.Controllers
 
             return RedirectToAction("Index", "Home");
         }
+
+        public ActionResult Account()
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null && user.Role == UserRole.HelpSeeker)
+            {
+                return View();
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
     }
 }

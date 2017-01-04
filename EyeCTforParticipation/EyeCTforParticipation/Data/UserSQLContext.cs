@@ -44,7 +44,7 @@ namespace EyeCTforParticipation.Data
         public UserModel LoginPassword(string email)
         {
             UserModel result = null;
-            string query = @"SELECT Id, Role, Name, Password, Approved, Zoom
+            string query = @"SELECT Id, Role, Name, Password, Approved, Zoom, Birthdate
                              FROM [User] 
                              WHERE Email = @Email;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
@@ -63,7 +63,8 @@ namespace EyeCTforParticipation.Data
                             Name = reader.GetString(2),
                             Password = reader.GetString(3),
                             Approved = reader.GetBoolean(4),
-                            Zoom = reader.GetInt32(5)
+                            Zoom = reader.GetInt32(5),
+                            Birthdate = reader.GetDateTime(6)
                         };
                     }
                 }
@@ -125,19 +126,18 @@ namespace EyeCTforParticipation.Data
                 cmd.ExecuteNonQuery();
             }
         }
-        public void Edit(UserModel user)
+        public void Profile(string name, DateTime birthdate, int userId)
         {
             string query = @"UPDATE [User] 
-                             SET Email = @Email, Name = @Name, Password = @Password
+                             SET Name = @Name, Birthdate = @Birthdate
                              WHERE Id = @Id;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
-                cmd.Parameters.AddWithValue("@Id", user.Id);
-                cmd.Parameters.AddWithValue("@Email", user.Email);
-                cmd.Parameters.AddWithValue("@Name", user.Name);
-                cmd.Parameters.AddWithValue("@Password", user.Password);
+                cmd.Parameters.AddWithValue("@Name", name);
+                cmd.Parameters.AddWithValue("@Birthdate", birthdate);
+                cmd.Parameters.AddWithValue("@Id", userId);
                 cmd.ExecuteNonQuery();
             }
         }

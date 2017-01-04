@@ -166,10 +166,9 @@ namespace EyeCTforParticipation.Logic
         /// <param name="user">
         /// The new user data.
         /// </param>
-        public void Edit(UserModel user)
+        public void Profile(string name, DateTime birthdate, int userId)
         {
-            user.Password = user.Password != null ? Crypter.Blowfish.Crypt(user.Password) : null; //'?' ternary operator
-            context.Edit(user);
+            context.Profile(name, birthdate, userId);
         }
 
         /// <summary>

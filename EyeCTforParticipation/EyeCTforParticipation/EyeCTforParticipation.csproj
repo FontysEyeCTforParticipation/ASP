@@ -207,6 +207,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Uploads\Avatars\" />
+    <Folder Include="Views\Account\" />
     <Folder Include="Views\HelpRequest\" />
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +235,7 @@
     <Content Include="Views\HelpSeeker\HelpRequests.cshtml" />
     <Content Include="Views\Shared\_Header.cshtml" />
     <Content Include="Views\Shared\_Footer.cshtml" />
+    <Content Include="Views\HelpSeeker\Account.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -209,7 +209,6 @@ namespace EyeCTforParticipation.Logic
             if (helpRequest.Id == 0)
             {
                 helpRequest.Id = context.Create(helpRequest);
-                Console.WriteLine(helpRequest.Id + helpRequest.Title);
             } else
             {
                 context.Update(helpRequest);
@@ -283,25 +282,26 @@ namespace EyeCTforParticipation.Logic
         /// <param name="id">
         /// The id of the application.
         /// </param>
-        /// <param name="user">
-        /// The user that wants to cancel the application.
-        /// The application will only be cancelled if the user is an:
-        ///     - Volunteer
-        ///         Created the application.
-        ///     - Help seeker:
-        ///         Created the help request that was applied to.
+        /// <param name="volunteerId">
+        /// The volunteer that wants to cancel the application.
         /// </param>
-        public void CancelApplication(int id, UserModel user)
+        public void CancelApplication(int id, int volunteerId)
         {
-            switch (user.Role)
-            {
-                case UserRole.Volunteer:
-                    context.CancelApplication(id, user.Id);
-                    break;
-                case UserRole.HelpSeeker:
-                    context.CancelApplicationAsHelpSeeker(id, user.Id);
-                    break;
-            }
+            context.CancelApplication(id, volunteerId);
+        }
+
+        /// <summary>
+        /// Cancel the application to a help request.
+        /// </summary>
+        /// <param name="id">
+        /// The id of the application.
+        /// </param>
+        /// <param name="userId">
+        /// The help seeker that wants to cancel the application.
+        /// </param>
+        public void CancelApplicationAsHelpSeeker(int id, int userId)
+        {
+            context.CancelApplicationAsHelpSeeker(id, userId);
         }
 
         /// <summary>

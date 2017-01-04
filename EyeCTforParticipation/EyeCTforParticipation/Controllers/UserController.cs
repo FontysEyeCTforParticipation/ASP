@@ -24,15 +24,11 @@ namespace EyeCTforParticipation.Controllers
 
                 return Json(new
                 {
-                    Success = true,
-                    Role = user.Role
+                    role = user.Role
                 });
             }
 
-            return Json(new
-            {
-                Success = false
-            });
+            return Json(null);
         }
         
         public ActionResult Logout()
@@ -40,6 +36,26 @@ namespace EyeCTforParticipation.Controllers
             Session["user"] = null;
 
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        public void AccountProfile(string name, string birthdate)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null)
+            {
+                DateTime date = Convert.ToDateTime(birthdate);
+                switch (user.Role)
+                {
+                    case UserRole.HelpSeeker:
+                        userRepository.Profile(name, date, user.Id);
+                        user.Name = name;
+                        user.Birthdate = date;
+                        Session["User"] = user;
+                        break;
+                }
+            }
         }
 
         [HttpPost]

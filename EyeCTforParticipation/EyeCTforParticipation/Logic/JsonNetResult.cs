@@ -20,7 +20,12 @@ public class JsonNetResult : JsonResult
     public JsonNetResult()
     {
         Formatting = Formatting.None;
-        SerializerSettings = new JsonSerializerSettings();
+        SerializerSettings = new JsonSerializerSettings() {
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
+            Formatting = Formatting.Indented,
+            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+        };
         JsonRequestBehavior = JsonRequestBehavior.DenyGet;
     }
 

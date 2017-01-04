@@ -235,7 +235,8 @@ namespace EyeCTforParticipation.Data
                                 GROUP BY [Application].HelpRequestId
                              ) AS ApplicationsCount ON [HelpRequest].Id = ApplicationsCount.HelpRequestId
                              JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
-                             WHERE [HelpRequest].HelpSeekerUserId = @HelpSeekerUserId;";
+                             WHERE [HelpRequest].HelpSeekerUserId = @HelpSeekerUserId
+                             ORDER BY [HelpRequest].Date DESC;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
@@ -535,20 +536,25 @@ namespace EyeCTforParticipation.Data
 
         public void ApproveApplication(int applicationId, int helpSeekerId)
         {
-            string query = @"UPDATE [Application] 
-                             SET Status = @Status 
-                             WHERE Id = @Id AND Id IN (
-                                SELECT [Application].Id 
-                                FROM [Application] 
-                                JOIN [HelpRequest] ON [Application].HelpRequestId = [HelpRequest].Id 
-                                WHERE [HelpRequest].HelpSeekerUserId = @HelpSeekerUserId
-                             ) AND [Application].Status != @Cancelled;";
+            string query = @"UPDATE[Application]
+                             SET Status = CASE
+                                              WHEN Id = @Id
+                                              THEN @Status
+                                              ELSE @None
+                                          END
+                             WHERE Id IN(
+                                SELECT[Application].Id
+                                FROM[Application]
+                                JOIN[HelpRequest] ON[Application].HelpRequestId = [HelpRequest].Id
+                                WHERE[HelpRequest].HelpSeekerUserId = @HelpSeekerUserId
+                             ) AND[Application].Status != @Cancelled;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@Id", applicationId);
                 cmd.Parameters.AddWithValue("@Status", (int)ApplicationStatus.APPROVED);
+                cmd.Parameters.AddWithValue("@None", (int)ApplicationStatus.NONE);
                 cmd.Parameters.AddWithValue("@HelpSeekerUserId", helpSeekerId);
                 cmd.Parameters.AddWithValue("@Cancelled", (int)ApplicationStatus.CANCELLED);
                 cmd.ExecuteNonQuery();

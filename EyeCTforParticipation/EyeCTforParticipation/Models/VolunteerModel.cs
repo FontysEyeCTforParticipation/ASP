@@ -15,14 +15,6 @@ namespace EyeCTforParticipation.Models
         bool driversLicense;
         bool car;
 
-        public override UserRole Role
-        {
-            get
-            {
-                return UserRole.Volunteer;
-            }
-        }
-
         public string About
         {
             get

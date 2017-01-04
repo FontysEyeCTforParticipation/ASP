@@ -1,0 +1,66 @@
+﻿@using EyeCTforParticipation.Models;
+@using System.Collections.Generic;
+
+@{
+    ViewBag.Title = "Account";
+    ViewBag.Scripts = new string[]
+    {
+        "chat"
+    };
+    ViewBag.Nav = new NavModel[]
+    {
+        new NavModel
+        {
+            Title = "Hulpvragen",
+            Href = "helprequests"
+        },
+        new NavModel
+        {
+            Title = "Hulpverleners",
+            Href = "aidworkers"
+        },
+        new NavModel
+        {
+            Title = "Account",
+            Href = "account",
+            Current = true
+        }
+    };
+
+    UserModel user = (UserModel)Session["user"];
+}
+
+<header>
+    <h2>Account</h2>
+</header>
+<form class="form profile_form" action="/user/accountprofile">
+    <h3>Profiel wijzigen</h3>
+    <h4>Naam</h4>
+    <input type="text" name="name" class="input" placeholder="Naam" value="@user.Name" />
+    <h4>Geboortedatum</h4>
+    <input type="date" name="birthdate" class="input" value="@user.Birthdate.ToString("yyyy-MM-dd")" />
+    <button class="primary_button">Profiel Wijzigen</button>
+</form>
+<form class="form email_form" action="/user/email">
+    <h3>E-mailadres wijzigen</h3>
+    <h4>Nieuw e-mailadres</h4>
+    <input type="text" name="email" class="input" placeholder="Nieuw e-mailadres" />
+    <h4>Wachtwoord</h4>
+    <input type="password" name="password" class="input" placeholder="Wachtwoord" />
+    <button class="primary_button">E-mailadres Wijzigen</button>
+</form>
+<form class="form password_form" action="/user/password">
+    <h3>Wachtwoord wijzigen</h3>
+    <h4>Wachtwoord</h4>
+    <input type="password" name="password" class="input" placeholder="Wachtwoord" />
+    <h4>Nieuw wachtwoord<</h4>
+    <input type="password" name="newPassword" class="input" placeholder="Nieuw wachtwoord" />
+    <input type="password" name="newPasswordRepeat" class="input fml" placeholder="Nieuw wachtwoord herhalen" />
+    <button class="primary_button">Wachtwoord Wijzigen</button>
+</form>
+<form class="form remove_form" action="/user/remove">
+    <h3>Account verwijderen</h3>
+    <h4>Wachtwoord</h4>
+    <input type="password" name="password" class="input" placeholder="Wachtwoord" />
+    <button class="primary_button">Account Verwijderen</button>
+</form>

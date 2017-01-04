@@ -161,5 +161,10 @@ namespace EyeCTforParticipation.Data
         {
             throw new NotImplementedException();
         }
+
+        public void Profile(string name, DateTime birthdate, int userId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

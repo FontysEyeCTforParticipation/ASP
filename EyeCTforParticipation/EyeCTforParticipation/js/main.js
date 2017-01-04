@@ -70,8 +70,8 @@ $(function() {
 					email: data.email,
 					password: data.password
 				}, function(data) {
-					if(data.Success) {
-						switch(data.Role) {
+					if(data) {
+						switch(data.role) {
 							case 1:
 								window.location.href = "/helpseeker/helprequests"
 								break;
@@ -88,21 +88,21 @@ $(function() {
 	
 	//User	
 	function userPopup(data) {
-		var age = Math.abs(new Date(new Date() - new Date(data.Birthdate)).getFullYear() - 1970);
+		var age = Math.abs(new Date(new Date() - new Date(data.birthdate)).getFullYear() - 1970);
 		return new jPopup({
-			title: "<h3>" + data.Name + "</h3>",
+			title: "<h3>" + data.name + "</h3>",
 			content: "<div class=\"info\">"
-					+(data.Birthdate ? "<h4>Leeftijd</h4>" : "")
-					+(data.Birthdate ? "<p>" + age + " jaar</p>" : "")
-					+(data.Address ?" <h4>Adres</h4>" : "")
-					+(data.Address ? "<p>" + data.Address + "</p>" : "")
-					+(data.DriversLicense ?" <h4>Rijbewijs</h4>" : "")
-					+(data.DriversLicense ? "<p><i class=\"material-icons\">&#xE5CA;</i>Heeft een rijbewijs.</p>" : "")
-					+(data.Car ? "<h4>Auto</h4>" : "")
-					+(data.Car ? "<p><i class=\"material-icons\">&#xE5CA;</i>Heeft beschikking tot een auto.</p>" : "")
+					+(data.birthdate ? "<h4>Leeftijd</h4>" : "")
+					+(data.birthdate ? "<p>" + age + " jaar</p>" : "")
+					+(data.address ?" <h4>Adres</h4>" : "")
+					+(data.address ? "<p>" + data.address + "</p>" : "")
+					+(data.driversLicense ?" <h4>Rijbewijs</h4>" : "")
+					+(data.driversLicense ? "<p><i class=\"material-icons\">&#xE5CA;</i>Heeft een rijbewijs.</p>" : "")
+					+(data.car ? "<h4>Auto</h4>" : "")
+					+(data.car ? "<p><i class=\"material-icons\">&#xE5CA;</i>Heeft beschikking tot een auto.</p>" : "")
 					+"</div>"
-					+(data.About ? "<h4>Over</h4>" : "")
-					+(data.About ? "<p>" + nl2br(data.About) + "</p>" : ""),
+					+(data.about ? "<h4>Over</h4>" : "")
+					+(data.about ? "<p>" + nl2br(data.about) + "</p>" : ""),
 			closeButton: true,
 			classes: "user_popup"
 		});
@@ -222,13 +222,13 @@ $(function() {
 		});
 	}
 	
-	function helprequestManagePopup(data, context) {
-		data.Applications.sort(function(a, b) {
-			return new Date(a.Date) < new Date(b.Date) ? 1 : -1;
+	function helpRequestManagePopup(data, context) {
+		data.applications.sort(function(a, b) {
+			return new Date(a.date) < new Date(b.date) ? 1 : -1;
 		});
 		var title = function() {
 			var urgency = "";
-			switch(data.HelpRequest.Urgency) {
+			switch(data.helpRequest.urgency) {
 				case 1:
 					urgency = "<span class=\"urgency_low\">Belangrijk</span>";
 					break;
@@ -239,16 +239,16 @@ $(function() {
 					urgency = "<span class=\"urgency_critical\">Zeer urgent</span>";
 					break;
 			}
-			return (data.HelpRequest.Closed ? "<span class=\"closed\"><i class=\"material-icons\">&#xE897;</i><i>Gesloten</i></span>" : urgency) + data.HelpRequest.Title;
+			return (data.helpRequest.closed ? "<span class=\"closed\"><i class=\"material-icons\">&#xE897;</i><i>Gesloten</i></span>" : urgency) + data.helpRequest.title;
 		}
 		var statusButton = function(x) {
 			switch(x) {
-				case 0:
-					return "<i class=\"material-icons\">&#xE7FB;</i>Kennismaken";
 				case 1:
 					return "<i class=\"material-icons\">&#xE5CA;</i>Goedkeuren";
 				case 2:
 					return "<i class=\"material-icons\">&#xE5CD;</i>Afmelden";
+				default:
+					return "<i class=\"material-icons\">&#xE7FB;</i>Kennismaken";
 			}
 		};
 		var status = function(x) {
@@ -263,47 +263,56 @@ $(function() {
 		};
 		var applications = "";
 		var approved = false;
-		for(var x = 0; x < data.Applications.length; x++) {
-			if(data.Applications[x].Status == 2) {
+		for(var x = 0; x < data.applications.length; x++) {
+			if(data.applications[x].status == 2) {
 				approved = true;
 			}
 		}
-		for(var x = 0; x < data.Applications.length; x++) {
-			var date = new Date(data.Applications[x].Date);
-			applications += "<tr data-id=\"" + data.Applications[x].Id + "\">"
-								+"<td><h4>" + status(data.Applications[x].Status) + data.Applications[x].Volunteer.Name + "</h4></td>"
+		for(var x = 0; x < data.applications.length; x++) {
+			var date = new Date(data.applications[x].date);
+			applications += "<tr data-id=\"" + data.applications[x].id + "\">"
+								+"<td><h4>" + status(data.applications[x].status) + data.applications[x].volunteer.name + "</h4></td>"
 								+"<td><time>" + leadingZeros(date.getDate().toString(), 2) + "-" + leadingZeros((date.getMonth() + 1).toString(), 2) + "-" + date.getFullYear() + "</time></td>"
-								+"<td><button class=\"primary_button\"" + (approved && data.applications[x].status != 2 ? " disabled" : "") + ">" + statusButton(data.Applications[x].Status) + "</button></td>"
+								+"<td><button class=\"primary_button\"" + (approved && data.applications[x].status != 2 ? " disabled" : "") + ">" + statusButton(data.applications[x].status) + "</button></td>"
 							+"</tr>";
 		}
 		var closeButtonText = function() {
-			return data.HelpRequest.Closed ? "<i class=\"material-icons\">&#xE898;</i>Openen" : "<i class=\"material-icons\">&#xE899;</i>Sluiten"
+			return data.helpRequest.closed ? "<i class=\"material-icons\">&#xE898;</i>Openen" : "<i class=\"material-icons\">&#xE899;</i>Sluiten"
 		}
 		var closeButton = new jPopup.button({
 			text: closeButtonText(),
 			classes: "button",
 			close: false,
 			onclick: function() {
-				data.HelpRequest.Closed = !data.HelpRequest.Closed;
+				data.helpRequest.closed = !data.helpRequest.closed;
 				closeButton.text(closeButtonText());
 				closeButton._parents[0].title("<h3>" + title() + "</h3>");
 				if(context) {
 					$(context).children("td:first-child").children("h4").html(title());
 				}
 				closeButton._parents[0].elements.content.find(".tabs li:first-child").click().next().toggleClass("disabled");
+				if(data.helpRequest.closed) {
+					$.post("/helprequest/close", {
+						id: data.helpRequest.id
+					});
+				} else {
+					$.post("/helprequest/open", {
+						id: data.helpRequest.id
+					});
+				}
 			}
 		})
 		return new jPopup({
 			title: "<h3>" + title() + "</h3>",
 			content: "<ul class=\"tabs\">"
 						+"<li class=\"current\" data-tab=\"info\">Info</li>"
-						+"<li data-tab=\"applications\"" + (data.HelpRequest.Closed ? " class=\"disabled\"" : "") + ">Aanmeldingen</li>"
+						+"<li data-tab=\"applications\"" + (data.helpRequest.closed ? " class=\"disabled\"" : "") + ">Aanmeldingen</li>"
 					+"</ul>"
 					+"<article class=\"info\" data-tab=\"info\">"
-						+(data.HelpRequest.Address ? "<h4>Locatie</h4>" : "")
-						+(data.HelpRequest.Address ? "<p>" + data.HelpRequest.Address + "</p>" : "")
+						+(data.helpRequest.address ? "<h4>Locatie</h4>" : "")
+						+(data.helpRequest.address ? "<p>" + data.helpRequest.address + "</p>" : "")
 						+"<h4>Inhoud</h4>"
-						+"<p>" + nl2br(data.HelpRequest.Content) + "</p>"
+						+"<p>" + nl2br(data.helpRequest.content) + "</p>"
 					+"</article>"
 					+"<article class=\"applications\" data-tab=\"applications\">"
 						+"<table>" + applications + "</table>"
@@ -317,24 +326,28 @@ $(function() {
 					close: false,
 					onclick: function() {
 						var self = this;
-						helprequestEditPopup(data).open(function(r) {
+						helpRequestEditPopup(data.helpRequest).open(function(r) {
 							if(r) {
-								var f = this.form();
-								data.HelpRequest.Title = f.find(".title").val();
-								data.HelpRequest.Urgency = parseInt(0 + f.find(".urgency").val());
-								data.HelpRequest.Address = f.find(".location").val();
-								data.HelpRequest.Content = f.find(".content").val();
-								self.title("<h3>" + title() + "</h3>");
-								self.elements.content.children(".info").html((data.HelpRequest.Address ? "<h4>Locatie</h4>" : "")
-																			+(data.HelpRequest.Address ? "<p>" + data.HelpRequest.Address + "</p>" : "")
-																			+"<h4>Inhoud</h4>"
-																			+"<p>" + nl2br(data.HelpRequest.Content) + "</p>");
-								if(context) {
-									$(context).children("td:first-child").children("h4").html(title());
-									$(context).children("td:last-child").html(data.HelpRequest.Address ? data.HelpRequest.Address : "-");
-								}
+								var f = this.form().serializeObject();
+								f.id = data.helpRequest.id;
+								f.urgency = f.urgency ? f.urgency : 0;
+								$.post("/helprequest/save",	f, function() {
+									$.get("/helprequest/get", {
+										id: data.helpRequest.id
+									}, function(newData) {
+										data = newData;
+										self.title("<h3>" + title() + "</h3>");
+										self.elements.content.children(".info").html((data.helpRequest.address ? "<h4>Locatie</h4>" : "")
+																					+(data.helpRequest.address ? "<p>" + data.helpRequest.address + "</p>" : "")
+																					+"<h4>Inhoud</h4>"
+																					+"<p>" + nl2br(data.helpRequest.content) + "</p>");
+										if(context) {
+											$(context).children("td:first-child").children("h4").html(title());
+											$(context).children("td:last-child").html(data.helpRequest.address ? data.helpRequest.address : "-");
+										}
+									});
+								});
 							}
-							
 						});
 					}
 				},
@@ -345,36 +358,55 @@ $(function() {
 					var self = this;
 					popupTabs(this);
 					this.elements.content.children(".applications").find("tr").click(function() {
-						for(var x = 0; x < data.Applications.length; x++) {
-							if(data.Applications[x].Id == $(this).data("id")) {
-								userPopup(data.Applications[x].Volunteer).open();
+						for(var x = 0; x < data.applications.length; x++) {
+							if(data.applications[x].id == $(this).data("id")) {
+								userPopup(data.applications[x].volunteer).open();
 							}
 						}
 					});
 					this.elements.content.children(".applications").find("button").click(function(e) {
 						e.stopPropagation();
-						for(var x = 0; x < data.Applications.length; x++) {
-							if(data.Applications[x].Id == $(this).parent().parent().data("id")) {
-								data.Applications[x].Status = data.Applications[x].Status == 2 ? 0 : data.Applications[x].Status + 1;
-								if(data.Applications[x].Status == 0 || data.Applications[x].Status == 2) {
+						var id = $(this).parent().parent().data("id");
+						console.log(id);
+						for(var x = 0; x < data.applications.length; x++) {
+							if(data.applications[x].id == id) {
+								data.applications[x].status = "status" in data.applications[x] ? data.applications[x].status == 2 ? 0 : data.applications[x].status + 1 : 1;
+								switch(data.applications[x].status) {
+									case 0:
+										$.post("/helprequest/cancel", {
+											applicationId: id
+										});
+										break;
+									case 1:
+										$.post("/helprequest/interview", {
+											applicationId: id
+										});
+										break;
+									case 2:
+										$.post("/helprequest/approve", {
+											applicationId: id
+										});
+										break;
+								}
+								if(data.applications[x].status == 0 || data.applications[x].status == 2) {
 									self.elements.content.children(".applications").find("h4").children("span").remove();
 								}
-								if(data.Applications[x].Status == 1) {
-									$(this).parent().parent().find("h4").html(status(1) + data.Applications[x].Volunteer.Name);
+								if(data.applications[x].status == 1) {
+									$(this).parent().parent().find("h4").html(status(1) + data.applications[x].volunteer.name);
 								}
-								if(data.Applications[x].Status == 2) {
-									for(var y = 0; y < data.Applications.length; y++) {
-										if(data.Applications[y].Id != data.Applications[x].Id) {
-											data.Applications[y].Status = 0;
+								if(data.applications[x].status == 2) {
+									for(var y = 0; y < data.applications.length; y++) {
+										if(data.applications[y].id != data.applications[x].id) {
+											data.applications[y].status = 0;
 										}
 									}
 									self.elements.content.children(".applications").find("button").html(statusButton(0)).prop("disabled", true);
-									$(this).parent().parent().find("h4").html(status(2) + data.Applications[x].Volunteer.Name);
+									$(this).parent().parent().find("h4").html(status(2) + data.applications[x].volunteer.name);
 								}
-								if(data.Applications[x].Status == 0) {
+								if(data.applications[x].status == 0) {
 									self.elements.content.children(".applications").find("button").prop("disabled", false);
 								}
-								$(this).html(statusButton(data.Applications[x].Status)).prop("disabled", false);
+								$(this).html(statusButton(data.applications[x].status)).prop("disabled", false);
 							}
 						}
 					});
@@ -384,19 +416,19 @@ $(function() {
 		});
 	}
 	
-	function helprequestEditPopup(data) {
+	function helpRequestEditPopup(data) {
 		var popup = new jPopup({
 			title: "<h3>Hulpvraag toevoegen</h3>",
-			content: "<input type=\"text\" class=\"input title\" placeholder=\"Titel\" />"
-					+"<select class=\"input urgency\" required>"
+			content: "<input type=\"text\" name=\"title\" class=\"input\" placeholder=\"Titel\" />"
+					+"<select name=\"urgency\" class=\"input\" required>"
 						+"<option value=\"\" selected disabled>Urgentie</option>"
 						+"<option value=\"0\">Geen</option>"
 						+"<option value=\"1\">Belangrijk</option>"
 						+"<option value=\"2\">Urgent</option>"
 						+"<option value=\"3\">Zeer urgent</option>"
 					+"</select>"
-					+"<input type=\"text\" class=\"input location\" placeholder=\"Locatie\" />"
-					+"<textarea class=\"input content\" rows=\"2\" placeholder=\"Inhoud\"></textarea>",
+					+"<input type=\"text\" name=\"address\" class=\"input\" placeholder=\"Locatie\" />"
+					+"<textarea name=\"content\" class=\"input\" rows=\"2\" placeholder=\"Inhoud\"></textarea>",
 			buttons: [
 				{
 					text: "Opslaan",
@@ -423,10 +455,10 @@ $(function() {
 		});
 		if(data) {
 			popup.title("<h3>Hulpvraag aanpassen</h3>");
-			popup.elements.content.children(".title").val(data.title);
-			popup.elements.content.children(".urgency").val(data.urgency);
-			popup.elements.content.children(".location").val(data.location);
-			popup.elements.content.children(".content").val(data.content);
+			popup.elements.content.children("[name=title]").val(data.title);
+			popup.elements.content.children("[name=urgency]").val(data.urgency ? data.urgency : 0);
+			popup.elements.content.children("[name=address]").val(data.address);
+			popup.elements.content.children("[name=content]").val(data.content);
 		}
 		return popup;
 	}
@@ -438,25 +470,95 @@ $(function() {
 	$("table.helprequests").on("click", "tr:not(:first-child)", function() {
 		var self = this;
 		$.get("/helprequest/get", {
-			id: 8
+			id: $(this).data("id")
 		}, function(data) {
-			if(data.Success) {
-				helprequestManagePopup(data, self).open();
+			if(data) {
+				helpRequestManagePopup(data, self).open();
 			}
 		});
 	});
 	
 	$(".add_helprequest").click(function() {
-		helprequestEditPopup().open(function(r) {
+		helpRequestEditPopup().open(function(r) {
 			if(r) {
-				var f = this.form();
-				var helprequest = {
-					title: f.find(".title").val(),
-					urgency: parseInt(0 + f.find(".urgency").val()),
-					location: f.find(".location").val(),
-					content: f.find(".content").val()
-				}
+				$.post("/helprequest/save", this.form().serializeObject());
+				$("#section .info").hide();
 			}
+		});
+	});
+	
+	//Account
+	function account_form(form, method) {
+		var data = $(form).serializeObject();
+		$.post($(form).attr("action"), data, function() {
+			if(method) {
+				method(data);
+			}
+		});
+	}
+	
+	$(".profile_form").submit(function(e) {
+		e.preventDefault();
+		account_form(this, function(data) {
+			console.log(data);
+			$("#header .user p").html(data.name);
+			new jPopup({
+				title: "<h3>Profiel wijzigen</h3>",
+				content: "<p>Profiel is gewijzigd.</p>",
+				buttons: [
+					{
+						text: "Ok",
+						classes: "primary_button"
+					}
+				],
+				closeButton: true
+			}).open();
+		});
+	});
+	
+	$(".email_form").submit(function(e) {
+		e.preventDefault();
+		account_form(this, function(data) {
+			new jPopup({
+				title: "<h3>E-mailadres wijzigen</h3>",
+				content: "<p>E-mailadres is gewijzigd.</p>",
+				buttons: [
+					{
+						text: "Ok",
+						classes: "primary_button"
+					}
+				],
+				closeButton: true
+			}).open();
+		});
+	});
+	
+	$(".email_form").submit(function(e) {
+		e.preventDefault();
+		account_form(this, function(data) {
+			new jPopup({
+				title: "<h3>E-mailadres wijzigen</h3>",
+				content: "<p>E-mailadres is gewijzigd.</p>",
+				buttons: [
+					{
+						text: "Ok",
+						classes: "primary_button"
+					}
+				],
+				closeButton: true
+			}).open();
+		});
+	});
+	
+	$(".password_form").submit(function(e) {
+		e.preventDefault();
+		account_form(this, function(data) {
+		});
+	});
+	
+	$(".remove_form").submit(function(e) {
+		e.preventDefault();
+		account_form(this, function(data) {
 		});
 	});
 	
