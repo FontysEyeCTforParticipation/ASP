@@ -16,8 +16,7 @@ function updateZoom(delta) {
 	zoom += delta;
 	$.post("/user/zoom",
 	{
-		zoom: zoom,
-		userId: userId
+		zoom: zoom
 	});
 	setZoom(zoom);
 }
