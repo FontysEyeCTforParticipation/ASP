@@ -56,7 +56,7 @@ namespace EyeCTforParticipation.Logic
         public UserModel Login(string email, string password)
         {
             UserModel user = context.LoginPassword(email);
-            if(user != null && Crypter.CheckPassword(password, user.Password))
+            if(user != null && CheckPassword(password, user.Password))
             {
                 return user;
             }
@@ -170,6 +170,19 @@ namespace EyeCTforParticipation.Logic
         {
             context.Profile(name, birthdate, userId);
         }
+        
+        public bool CheckPassword(string password, string hash)
+        {
+            return Crypter.CheckPassword(password, hash);
+        }
+
+        public string Password(string password, int userId)
+        {
+            string hash = Crypter.Blowfish.Crypt(password);
+            context.Password(hash, userId);
+            return hash;
+        }
+
 
         /// <summary>
         /// Remove an user.

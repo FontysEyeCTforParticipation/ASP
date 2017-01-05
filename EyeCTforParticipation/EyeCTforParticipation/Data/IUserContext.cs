@@ -16,6 +16,7 @@ namespace EyeCTforParticipation.Data
         void RegisterVolunteer(VolunteerModel volunteer);
         void ApproveRegistration(int userId);
         void Profile(string name, DateTime birthdate, int userId);
+        void Password(string password, int userId);
         void Delete(int userId);
         void AddHelpSeeker(int helpSeekerId, int aidWorkerId);
         void RemoveHelpSeeker(int helpSeekerId, int aidWorkerId);

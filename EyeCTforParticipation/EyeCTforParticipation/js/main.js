@@ -488,19 +488,53 @@ $(function() {
 	});
 	
 	//Account
-	function account_form(form, method) {
-		var data = $(form).serializeObject();
-		$.post($(form).attr("action"), data, function() {
-			if(method) {
-				method(data);
-			}
+	function account_form(context, method, reset) {
+		var form = $(context).closest("form");
+		form.find("input").one("invalid", function(e) {
+			e.preventDefault();
 		});
+		if(!form[0].checkValidity()) {
+			var invalid = form.find(":invalid")[0];
+			new jPopup({
+				title: "<h3>Error</h3>",
+				content: "<p>" + invalid.validationMessage + "</p>",
+				buttons: [
+					{
+						text: "Ok",
+						classes: "primary_button"
+					}
+				],
+				closeButton: true,
+				overlayClose: true,
+				overrides: {
+					close: function() {
+						var s = jPopup._super(this);
+						setTimeout(function() {
+							$(invalid).addClass("invalid").focus().one("input blur", function(e) {
+								$(this).removeClass("invalid");
+							});
+						}, this.speed());
+						return s;
+					}
+				}
+			}).open(function() {
+			});
+		} else {
+			var data = form.serializeObject();
+			$.post(form.attr("action"), data, function() {
+				if(reset) {
+					form[0].reset();
+				}
+				if(method) {
+					method(data);
+				}
+			});
+		}
 	}
 	
-	$(".profile_form").submit(function(e) {
+	$(".profile_form button").click(function(e) {
 		e.preventDefault();
 		account_form(this, function(data) {
-			console.log(data);
 			$("#header .user p").html(data.name);
 			new jPopup({
 				title: "<h3>Profiel wijzigen</h3>",
@@ -516,9 +550,9 @@ $(function() {
 		});
 	});
 	
-	$(".email_form").submit(function(e) {
+	$(".email_form button").click(function(e) {
 		e.preventDefault();
-		account_form(this, function(data) {
+		account_form(this, function() {
 			new jPopup({
 				title: "<h3>E-mailadres wijzigen</h3>",
 				content: "<p>E-mailadres is gewijzigd.</p>",
@@ -533,12 +567,12 @@ $(function() {
 		});
 	});
 	
-	$(".email_form").submit(function(e) {
+	$(".password_form button").click(function(e) {
 		e.preventDefault();
-		account_form(this, function(data) {
+		account_form(this, function() {
 			new jPopup({
-				title: "<h3>E-mailadres wijzigen</h3>",
-				content: "<p>E-mailadres is gewijzigd.</p>",
+				title: "<h3>Wachtwoord wijzigen</h3>",
+				content: "<p>Wachtwoord is gewijzigd.</p>",
 				buttons: [
 					{
 						text: "Ok",
@@ -547,16 +581,18 @@ $(function() {
 				],
 				closeButton: true
 			}).open();
-		});
+		}, true);
+	})
+	
+	$(".password_form input[name=newPasswordRepeat]").on("input", function() {
+		if($(this).val() != $(".password_form input[name=newPassword]").val()) {
+			this.setCustomValidity("Wachtwoorden moeten overeenkomen.");
+		} else {
+			this.setCustomValidity("");
+		}
 	});
 	
-	$(".password_form").submit(function(e) {
-		e.preventDefault();
-		account_form(this, function(data) {
-		});
-	});
-	
-	$(".remove_form").submit(function(e) {
+	$(".remove_form button").click(function(e) {
 		e.preventDefault();
 		account_form(this, function(data) {
 		});

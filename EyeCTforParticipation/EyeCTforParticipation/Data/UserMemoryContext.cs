@@ -166,5 +166,10 @@ namespace EyeCTforParticipation.Data
         {
             throw new NotImplementedException();
         }
+
+        public void Password(string password, int userId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

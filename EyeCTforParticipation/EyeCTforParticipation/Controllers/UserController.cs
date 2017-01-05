@@ -39,7 +39,7 @@ namespace EyeCTforParticipation.Controllers
         }
 
         [HttpPost]
-        public void AccountProfile(string name, string birthdate)
+        public void Profile(string name, string birthdate)
         {
             UserModel user = (UserModel)Session["user"];
 
@@ -55,6 +55,19 @@ namespace EyeCTforParticipation.Controllers
                         Session["User"] = user;
                         break;
                 }
+            }
+        }
+
+
+        [HttpPost]
+        public void Password(string password, string newPassword)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null & userRepository.CheckPassword(password, user.Password))
+            {
+                user.Password = userRepository.Password(newPassword, user.Id);
+                Session["user"] = user;
             }
         }
 

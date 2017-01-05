@@ -228,6 +228,9 @@ h6 {
 	&:-moz-placeholder {
 	  color: #bbb;
 	}
+	&.invalid {
+		border-bottom-color: #ff510f;
+	}
 }
 
 .check {
@@ -323,6 +326,14 @@ h6 {
 	&:active {
 		background: #ccc;
 	}
+}
+
+.input_notes {
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 24px;
+	margin-bottom: 24px;
+	color: #3071a9;
 }
 
 p {
@@ -541,12 +552,28 @@ p {
 		.primary_button {
 			margin-top: 24px;
 		}
-		.fml,
-		.primary_button {
-			margin-left: 300px;
-		}
+		.input_notes,
 		.check {
 			width: 360px;
+			overflow: hidden;
+		}
+		.input,
+		.check,
+		.primary_button,
+		.input_notes {
+			margin-left: 300px;
+			h4 + & {
+				margin-left: 0;
+			}
+		}
+		.input_notes {
+			float: left;
+		}
+	}
+	table.helprequests {
+		td:last-child {
+			max-width: 160px;
+			text-overflow: ellipsis;
 			overflow: hidden;
 		}
 	}

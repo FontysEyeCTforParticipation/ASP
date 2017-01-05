@@ -311,5 +311,20 @@ namespace EyeCTforParticipation.Data
 
             }
         }
+
+        public void Password(string password, int userId)
+        {
+            string query = @"UPDATE [User] 
+                             SET Password = @Password
+                             WHERE Id = @Id;";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@Password", password);
+                cmd.Parameters.AddWithValue("@Id", userId);
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }
