@@ -14,6 +14,11 @@ namespace EyeCTforParticipation.Controllers
     {
         HelpRequestRepository helpRequestRepository = new HelpRequestRepository(new HelpRequestSQLContext());
 
+        public ActionResult Index()
+        {
+            return RedirectToAction("HelpRequests");
+        }
+
         public ActionResult HelpRequests()
         {
             UserModel user = (UserModel)Session["user"];

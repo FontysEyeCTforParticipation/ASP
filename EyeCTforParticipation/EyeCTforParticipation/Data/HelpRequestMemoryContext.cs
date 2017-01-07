@@ -362,5 +362,60 @@ namespace EyeCTforParticipation.Data
         {
             throw new NotImplementedException();
         }
+
+        public SearchResultModel Search(SearchOrder order, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SearchResultModel Search(string keywords, SearchOrder order, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SearchResultModel Search(GeoCoordinate location, int distance, SearchOrder order, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SearchResultModel Search(string keywords, GeoCoordinate location, int distance, SearchOrder order, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SearchResultModel Search(SearchOrder order, int userId, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SearchResultModel Search(string keywords, SearchOrder order, int userId, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SearchResultModel Search(GeoCoordinate location, int distance, SearchOrder order, int userId, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SearchResultModel Search(string keywords, GeoCoordinate location, int distance, SearchOrder order, int userId, int skip)
+        {
+            throw new NotImplementedException();
+        }
+
+        public HelpRequestModel Get(int id, int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<HelpRequestModel> GetApplications(int volunteerId, GeoCoordinate location)
+        {
+            throw new NotImplementedException();
+        }
+
+        List<HelpRequestModel> IHelpRequestContext.GetApplications(int volunteerId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

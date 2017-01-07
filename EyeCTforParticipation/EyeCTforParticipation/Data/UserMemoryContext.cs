@@ -171,5 +171,35 @@ namespace EyeCTforParticipation.Data
         {
             throw new NotImplementedException();
         }
+
+        public UserModel Get(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string Token(string token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Token(string token, string data)
+        {
+            throw new NotImplementedException();
+        }
+
+        bool IUserContext.Password(string hash, int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public VolunteerModel GetVolunteer(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void VolunteerProfile(string address, GeoCoordinate location, bool driversLicense, bool car, string about, int userId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

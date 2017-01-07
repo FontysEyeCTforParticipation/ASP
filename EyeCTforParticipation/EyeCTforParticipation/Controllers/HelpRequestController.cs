@@ -9,7 +9,7 @@ using System.Web.Mvc;
 
 namespace EyeCTforParticipation.Controllers
 {
-    public class HelpRequestController : BaseController
+    public class HelpRequestController : Controller
     {
         HelpRequestRepository helpRequestRepository = new HelpRequestRepository(new HelpRequestSQLContext());
 
@@ -20,10 +20,11 @@ namespace EyeCTforParticipation.Controllers
 
             if (user != null)
             {
+                HelpRequestModel helpRequest;
                 switch (user.Role)
                 {
                     case UserRole.HelpSeeker:
-                        HelpRequestModel helpRequest = helpRequestRepository.Get(id);
+                        helpRequest = helpRequestRepository.Get(id);
 
                         if (helpRequest != null)
                         {
@@ -34,6 +35,14 @@ namespace EyeCTforParticipation.Controllers
                                 helpRequest = helpRequest,
                                 applications = applications
                             }, JsonRequestBehavior.AllowGet);
+                        }
+                        break;
+                    case UserRole.Volunteer:
+                        helpRequest = helpRequestRepository.Get(id, user.Id);
+
+                        if (helpRequest != null)
+                        {
+                            return Json(helpRequest, JsonRequestBehavior.AllowGet);
                         }
                         break;
                 }
@@ -105,6 +114,17 @@ namespace EyeCTforParticipation.Controllers
             if (user != null && user.Role == UserRole.HelpSeeker)
             {
                 helpRequestRepository.ApproveApplication(applicationId, user.Id);
+            }
+        }
+
+        [HttpPost]
+        public void Apply(int id)
+        {
+            UserModel user = (UserModel)Session["user"];
+
+            if (user != null && user.Role == UserRole.Volunteer)
+            {
+                helpRequestRepository.Apply(id, user.Id);
             }
         }
 

@@ -10,14 +10,14 @@
     {
         new NavModel
         {
-            Title = "Hulpvragen",
-            Href = "helprequests",
-            Current = true
+            Title = "Zoeken",
+            Href = "search"
         },
         new NavModel
         {
-            Title = "Hulpverleners",
-            Href = "aidworkers"
+            Title = "Hulpvragen",
+            Href = "helprequests",
+            Current = true
         },
         new NavModel
         {
@@ -30,20 +30,19 @@
 }
 
 <header>
-    <h2>Hulpvragen</h2>
-    <button class="primary_button add_helprequest"><i class="material-icons">&#xE145;</i>Hulpvraag toevoegen</button>
+    <h2>Zoeken</h2>
 </header>
-<table class="helprequests">
+<table class="search_results applications">
     <tr>
         <th><h3>Titel</h3></th>
-        <th><h3>Aanmeldingen</h3></th>
+        <th><h3>Gebruiker</h3></th>
         <th><h3>Datum</h3></th>
         <th><h3>Locatie</h3></th>
     </tr>
     @foreach (HelpRequestModel helpRequest in helpRequests)
     {
         string urgency = "";
-        switch(helpRequest.Urgency)
+        switch (helpRequest.Urgency)
         {
             case HelpRequestUrgency.LOW:
                 urgency = "<span class=\"urgency_low\">Belangrijk</span>";
@@ -55,19 +54,30 @@
                 urgency = "<span class=\"urgency_critical\">Zeer urgent</span>";
                 break;
         }
-        urgency = helpRequest.Closed ? "<span class=\"closed\"><i class=\"material-icons\">&#xE897;</i><i>Gesloten</i></span>" : urgency;
-    
+        if (helpRequest.Application != null)
+        {
+            switch (helpRequest.Application.Status)
+            {
+                case ApplicationStatus.NONE:
+                    urgency = "<span class=\"applied\"><i class=\"material-icons\">&#xE145;</i><i>Aangemeld</i></span>";
+                    break;
+                case ApplicationStatus.INTERVIEW:
+                    urgency = "<span class=\"interview\"><i class=\"material-icons\">&#xE7FB;</i><i>Kennismaken</i></span>";
+                    break;
+                case ApplicationStatus.APPROVED:
+                    urgency = "<span class=\"approved\"><i class=\"material-icons\">&#xE5CA;</i><i>Goedgekeurd</i></span>";
+                    break;
+            }
+        }
+
         <tr data-id="@helpRequest.Id">
             <td>
                 <h4>@Html.Raw(urgency + helpRequest.Title)</h4>
             </td>
-            <td>@helpRequest.ApplicationsCount</td>
+            <td>@helpRequest.HelpSeeker.Name</td>
             <td>@helpRequest.Date.ToString("dd-MM-yyyy")</td>
             <td>@helpRequest.Address</td>
         </tr>
     }
 </table>
-@if (helpRequests.Count == 0)
-{
-    <p class="info">Voeg een hulpvraag toe door op <b>Hulpvraag toevoegen</b> te klikken.</p>
-}
+<p class="info"@(helpRequests.Count > 0 ? @Html.Raw(" style=\"display: none\"") : Html.Raw(""))>Hulpvragen waarop u zich heeft aangemeld worden hier getoond.</p>

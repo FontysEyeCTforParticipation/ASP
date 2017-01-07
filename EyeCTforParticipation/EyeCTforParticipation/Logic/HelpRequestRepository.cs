@@ -28,7 +28,7 @@ namespace EyeCTforParticipation.Logic
         /// <returns>
         /// The formatted postal code or null if the postal code could not be formatted.
         /// </returns>
-        string FormatPostalCode(string postalCode)
+        public string FormatPostalCode(string postalCode)
         {
             if (postalCode != null)
             {
@@ -61,11 +61,8 @@ namespace EyeCTforParticipation.Logic
         /// <returns>
         /// A list of help requests.
         /// </returns>
-        public List<HelpRequestModel> Search(string keywords, string postalCode, int distance, SearchOrder order)
+        public SearchResultModel Search(string keywords, string postalCode, SearchDistance distance, SearchOrder order, int userId, int skip)
         {
-            // Format postal code
-            postalCode = FormatPostalCode(postalCode);
-
             // Default location
             GeoCoordinate location = null;
 
@@ -76,7 +73,7 @@ namespace EyeCTforParticipation.Logic
                 location = googleMapsApi.Location;
             }
 
-            return Search(keywords, location, distance, order);
+            return Search(keywords, location, distance, order, userId, skip);
         }
 
         /// <summary>
@@ -97,17 +94,14 @@ namespace EyeCTforParticipation.Logic
         /// <returns>
         /// A list of help requests.
         /// </returns>
-        public List<HelpRequestModel> Search(string keywords, GeoCoordinate location, int distance, SearchOrder order)
+        public SearchResultModel Search(string keywords, GeoCoordinate location, SearchDistance distance, SearchOrder order, int userId, int skip)
         {
             // Maximum keywords length is 200
             keywords = keywords != null ? keywords.Length > 200 ? keywords.Substring(0, 200) : keywords.Length > 0 ? keywords : null : null;
 
-            // Make sure that distance is positive
-            distance = Math.Abs(distance);
-
             if (keywords != null && location != null)
             {
-                return context.Search(keywords, location, distance, order);
+                return context.Search(keywords, location, (int)distance, order, userId, skip);
             }
             else if (keywords != null)
             {
@@ -117,9 +111,9 @@ namespace EyeCTforParticipation.Logic
                     case SearchOrder.DATE_DESC:
                     case SearchOrder.RELEVANCE_ASC:
                     case SearchOrder.RELEVANCE_DESC:
-                        return context.Search(keywords, order);
+                        return context.Search(keywords, order, userId, skip);
                     default:
-                        return context.Search(keywords, SearchOrder.DATE_DESC);
+                        return context.Search(keywords, SearchOrder.DATE_DESC, userId, skip);
                 }
             }
             else if (location != null)
@@ -130,9 +124,9 @@ namespace EyeCTforParticipation.Logic
                     case SearchOrder.DATE_DESC:
                     case SearchOrder.DISTANCE_ASC:
                     case SearchOrder.DISTANCE_DESC:
-                        return context.Search(location, distance, order);
+                        return context.Search(location, (int)distance, order, userId, skip);
                     default:
-                        return context.Search(location, distance, SearchOrder.DISTANCE_ASC);
+                        return context.Search(location, (int)distance, SearchOrder.DISTANCE_ASC, userId, skip);
                 }
             }
             else
@@ -141,9 +135,9 @@ namespace EyeCTforParticipation.Logic
                 {
                     case SearchOrder.DATE_ASC:
                     case SearchOrder.DATE_DESC:
-                        return context.Search(order);
+                        return context.Search(order, userId, skip);
                     default:
-                        return context.Search(SearchOrder.DATE_DESC);
+                        return context.Search(SearchOrder.DATE_DESC, userId, skip);
                 }
             }
         }
@@ -160,6 +154,25 @@ namespace EyeCTforParticipation.Logic
         public HelpRequestModel Get(int id)
         {
             return context.Get(id);
+        }
+
+
+
+        /// <summary>
+        /// Get a specific help request.
+        /// </summary>
+        /// <param name="id">
+        /// The id of the help request.
+        /// </param>
+        /// <param name="volunteerId">
+        /// The id of the volunteer.
+        /// </param>
+        /// <returns>
+        /// A help request.
+        /// </returns>
+        public HelpRequestModel Get(int id, int volunteerId)
+        {
+            return context.Get(id, volunteerId);
         }
 
         /// <summary>
@@ -313,7 +326,7 @@ namespace EyeCTforParticipation.Logic
         /// <returns>
         /// A list of applications for help requests by the volunteer
         /// </returns>
-        public List<ApplicationModel> GetApplications(int volunteerId)
+        public List<HelpRequestModel> GetApplications(int volunteerId)
         {
             return context.GetApplications(volunteerId);
         }

@@ -1,0 +1,75 @@
+﻿@using EyeCTforParticipation.Models;
+
+@{
+    ViewBag.Title = "Account";
+    ViewBag.Scripts = new string[]
+    {
+        "chat"
+    };
+    ViewBag.Nav = new NavModel[]
+    {
+        new NavModel
+        {
+            Title = "Zoeken",
+            Href = "search"
+        },
+        new NavModel
+        {
+            Title = "Hulpvragen",
+            Href = "helprequests"
+        },
+        new NavModel
+        {
+            Title = "Account",
+            Href = "account",
+            Current = true
+        }
+    };
+
+    UserModel user = (UserModel)Session["user"];
+    VolunteerModel volunteer = (VolunteerModel)Session["volunteer"];
+}
+
+<header>
+    <h2>Account</h2>
+</header>
+<form class="form profile_form" action="/user/profile">
+    <h3>Profiel wijzigen</h3>
+    <h4>Naam</h4>
+    <input type="text" name="name" class="input" placeholder="Naam" value="@user.Name" required />
+    <h4>Geboortedatum</h4>
+    <input type="date" name="birthdate" class="input" value="@user.Birthdate.ToString("yyyy-MM-dd")" required />
+    <h4>Adres</h4>
+    <input type="text" name="address" class="input" placeholder="Adres" value="@volunteer.Address" required />
+    <h4>Rijbewijs</></h4>
+    <label class="check"><input type="checkbox" name="driversLicense" checked="@volunteer.DriversLicense" /><i class="material-icons">&#xE835;</i><i class="material-icons">&#xE834;</i>Ik heb een rijbewijs.</label>
+    <h4>Auto</h4>
+    <label class="check"><input type="checkbox" name="car" checked="@volunteer.Car" /><i class="material-icons">&#xE835;</i><i class="material-icons">&#xE834;</i>Ik heb beschikking tot een auto.</label>
+    <h4>Over mij</h4>
+    <textarea name="about" class="input" rows="3" placeholder="Over mij...">@volunteer.About</textarea>
+    <button class="primary_button">Profiel Wijzigen</button>
+</form>
+<form class="form email_form" action="/user/email">
+    <h3>E-mailadres wijzigen</h3>
+    <h4>Nieuw e-mailadres</h4>
+    <input type="email" name="email" class="input" placeholder="Nieuw e-mailadres" required />
+    <h4>Wachtwoord</h4>
+    <input type="password" name="password" class="input" placeholder="Wachtwoord" required />
+    <button class="primary_button">E-mailadres Wijzigen</button>
+</form>
+<form class="form password_form" action="/user/password">
+    <h3>Wachtwoord wijzigen</h3>
+    <h4>Wachtwoord</h4>
+    <input type="password" name="password" class="input" placeholder="Wachtwoord" required/>
+    <h4>Nieuw wachtwoord</h4>
+    <input type="password" name="newPassword" class="input" placeholder="Nieuw wachtwoord" pattern="(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$" required />
+    <small class="input_notes">Minimaal 8 tekens waarvan minimaal één hoofdletter, één kleine letter en één symbool of cijfer</small>
+    <input type="password" name="newPasswordRepeat" class="input fml" placeholder="Nieuw wachtwoord herhalen" required />
+    <button class="primary_button">Wachtwoord Wijzigen</button>
+</form>
+<form class="form remove_form" action="/user/remove">
+    <h3>Account verwijderen</h3>
+    <h4>Wachtwoord</h4>
+    <input type="password" name="password" class="input" placeholder="Wachtwoord" required />
+    <button class="primary_button">Account Verwijderen</button>
+</form>

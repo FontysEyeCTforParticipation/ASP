@@ -570,8 +570,16 @@ p {
 			float: left;
 		}
 	}
+	table.applications,
 	table.helprequests {
 		td:last-child {
+			max-width: 160px;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+	}
+	table.search_results:not(.applications) {
+		td:nth-last-child(2) {
 			max-width: 160px;
 			text-overflow: ellipsis;
 			overflow: hidden;
@@ -825,16 +833,28 @@ p {
 				font-size: 14px;
 				text-transform: uppercase;
 				cursor: pointer;
+				b {
+					color: #fff;
+					background: #777;
+					padding: 2px 6px;
+					margin-right: 6px;
+				}
 				&:first-child {
 					margin-left: 20px;
 				}
 				&.current {
 					color: @color;
 					border-bottom: 2px solid @color;
+					b {
+						background: #3071a9;
+					}
 				}
 				&.disabled {
 					color: #ccc;
 					pointer-events: none;
+					b {
+						background: #ccc;
+					}
 				}
 			}
 			& ~ [data-tab] {

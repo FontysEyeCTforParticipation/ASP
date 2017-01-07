@@ -9,6 +9,11 @@ using CryptSharp;
 using System.IO;
 using System.Device.Location;
 using System.Text.RegularExpressions;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using Newtonsoft.Json;
+using System.Net.Mail;
+using System.Net;
 
 namespace EyeCTforParticipation.Logic
 {
@@ -19,6 +24,16 @@ namespace EyeCTforParticipation.Logic
         public UserRepository(IUserContext context)
         {
             this.context = context;
+        }
+
+        public UserModel Get(int userId)
+        {
+            return context.Get(userId);
+        }
+
+        public VolunteerModel GetVolunteer(int userId)
+        {
+            return context.GetVolunteer(userId);
         }
 
         /// <summary>
@@ -170,19 +185,110 @@ namespace EyeCTforParticipation.Logic
         {
             context.Profile(name, birthdate, userId);
         }
-        
+
+        public void VolunteerProfile(string address, bool driversLicense, bool car, string about, int userId)
+        {
+            //Default location
+            GeoCoordinate location = new GeoCoordinate(52.132633, 5.291265999999999);
+
+            //Try to get location
+            if (address != "Nederland")
+            {
+                GoogleMapsApi.Response googleMapsApi = GoogleMapsApi.Get(address, "nl", "nl");
+                if (googleMapsApi != null)
+                {
+                    location = googleMapsApi.Location;
+                    address = googleMapsApi.Address;
+                }
+            } else
+            {
+                address = "Nederland";
+            }
+
+            context.VolunteerProfile(address, location, driversLicense, car, about, userId);
+        }
+
         public bool CheckPassword(string password, string hash)
         {
             return Crypter.CheckPassword(password, hash);
         }
 
-        public string Password(string password, int userId)
+        private string Token()
         {
-            string hash = Crypter.Blowfish.Crypt(password);
-            context.Password(hash, userId);
-            return hash;
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
 
+        public string Token(string token)
+        {
+            string data = context.Token(token);
+            if(data == null)
+            {
+                throw new InvalidTokenException();
+            }
+            return data;
+        }
+
+        private string DictionaryToBase64(Dictionary<string, object> dictionary)
+        {
+            string json = JsonConvert.SerializeObject(dictionary, Formatting.None);
+            byte[] bytes = Encoding.UTF8.GetBytes(json);
+            return Convert.ToBase64String(bytes);
+        }
+
+        public Dictionary<string, object> Base64ToDictionary(string base64)
+        {
+            byte[] bytes = Convert.FromBase64String(base64);
+            string json = Encoding.UTF8.GetString(bytes);
+            return JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+        }
+
+        private void ConfirmEmail(string to, string name, string subject, string message, string token)
+        {
+            new Email("no-reply@eyectforparticipation.nl", to, subject, "<html><body style=\"font-family: sans-serif;line-height: 24px;font-size: 16px;color: #444;\"><h2 style\"font-weight: 300;\">EyeCT for Participation</h2><br />Geachte " + name + ",<br /><br />" + message + "<br />Klik <a href=\"http://eyectforparticipation.nl/user/confirm/" + token + "\" target=\"_blank\">hier</a> om dit te bevestigen.<br /><br /><br />Met vriendelijke groet,<br /><br />EyeCT for Participation</p></body></html>").Send();
+        }
+
+        public void Email(string newEmail, int userId, string url, string email, string name)
+        {
+            string token = Token();
+            Dictionary<string, object> data = new Dictionary<string, object>();
+            data["action"] = "email";
+            data["url"] = url;
+            data["userId"] = userId;
+            data["email"] = newEmail;
+            context.Token(token, DictionaryToBase64(data));
+            ConfirmEmail(email,
+                name,
+                "Bevestig uw e-mailadres wijziging van uw account op eyectforparticipation.nl",
+                "U heeft uw e-mailadres gewijzigd.",
+                token);
+        }
+
+        public void Password(string password, int userId, string url, string email, string name)
+        {
+            string hash = Crypter.Blowfish.Crypt(password);
+            string token = Token();
+            Dictionary<string, object> data = new Dictionary<string, object>();
+            data["action"] = "password";
+            data["url"] = url;
+            data["userId"] = userId;
+            data["hash"] = hash;
+            context.Token(token, DictionaryToBase64(data));
+            ConfirmEmail(email,
+                name,
+                "Bevestig uw wachtwoord wijziging van uw account op eyectforparticipation.nl",
+                "U heeft uw wachtwoord gewijzigd.",
+                token);
+        }
+
+        public void Password(string hash, int userId)
+        {
+            context.Password(hash, userId);
+        }
+
+        private bool ValidatePassword(string password)
+        {
+            return true;
+        }
 
         /// <summary>
         /// Remove an user.
@@ -308,7 +414,7 @@ namespace EyeCTforParticipation.Logic
             context.Zoom((zoom >= 100 ? (zoom <= 150 ? zoom : 150) : 100), userId);
         }
 
-        public bool emailValid(string email)
+        public bool ValidateEmail(string email)
         {
             if (email != null)
             {

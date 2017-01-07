@@ -21,6 +21,7 @@ namespace EyeCTforParticipation.Models
         HelpRequestUrgency urgency;
         bool closed;
         int applicationsCount;
+        ApplicationModel application;
 
         public int Id
         {
@@ -162,6 +163,19 @@ namespace EyeCTforParticipation.Models
             set
             {
                 applicationsCount = value;
+            }
+        }
+
+        public ApplicationModel Application
+        {
+            get
+            {
+                return application;
+            }
+
+            set
+            {
+                application = value;
             }
         }
     }

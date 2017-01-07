@@ -17,38 +17,44 @@ namespace EyeCTforParticipation.Data
             switch (order)
             {
                 case SearchOrder.DATE_ASC:
-                    return "Date DESC";
-                case SearchOrder.DATE_DESC:
                     return "Date ASC";
+                case SearchOrder.DATE_DESC:
+                    return "Date DESC";
                 case SearchOrder.DISTANCE_ASC:
-                    return "Distance DESC";
-                case SearchOrder.DISTANCE_DESC:
                     return "Distance ASC";
+                case SearchOrder.DISTANCE_DESC:
+                    return "Distance DESC";
                 case SearchOrder.RELEVANCE_ASC:
-                    return "Matches DESC";
+                    return "Matches ASC";
                 case SearchOrder.RELEVANCE_DESC:
                 default:
-                    return "Matches ASC";
+                    return "Matches DESC";
             }
         }
 
-        public List<HelpRequestModel> Search(SearchOrder order) 
+        public SearchResultModel Search(SearchOrder order, int userId, int skip) 
         {
-            List<HelpRequestModel> results = new List<HelpRequestModel>();
-            string query = @"SELECT [HelpRequest].Id, [HelpRequest].Title, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [User].Name 
+            SearchResultModel result = new SearchResultModel();
+            string query = @"SELECT [HelpRequest].Id, [HelpRequest].Title, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [User].Name, [Application].Status, Count(*) Over() AS Count 
                              FROM [HelpRequest] 
                              JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
+                             LEFT JOIN [Application] ON [HelpRequest].Id = [Application].HelpRequestId AND [Application].VolunteerId = @UserId 
                              WHERE [HelpRequest].Closed = 0 
-                             ORDER BY " + orderString(order);
+                             ORDER BY " + orderString(order) + " "
+                         + @"OFFSET @Skip ROWS
+                             FETCH NEXT 10 ROWS ONLY;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
-                using(SqlDataReader reader = cmd.ExecuteReader())
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@Skip", skip);
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        results.Add(new HelpRequestModel
+                        result.Count = reader.GetInt32(7);
+                        HelpRequestModel helpRequest = new HelpRequestModel
                         {
                             Id = reader.GetInt32(0),
                             Title = reader.GetString(1),
@@ -59,34 +65,49 @@ namespace EyeCTforParticipation.Data
                             {
                                 Name = reader.GetString(5)
                             }
-                        });
+                        };
+                        if (!reader.IsDBNull(6))
+                        {
+                            helpRequest.Application = new ApplicationModel
+                            {
+                                Status = (ApplicationStatus)reader.GetInt32(6)
+                            };
+                        }
+                        result.Results.Add(helpRequest);
                     }
                 }
             }
-            return results;
+            return result;
         }
 
-        public List<HelpRequestModel> Search(string keywords, SearchOrder order)
+        public SearchResultModel Search(string keywords, SearchOrder order, int userId, int skip)
         {
-            List<HelpRequestModel> results = new List<HelpRequestModel>();
-            string query = @"SELECT * FROM (
-                                 SELECT [HelpRequest].Id, [HelpRequest].Title, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [dbo].KeywordMatches(Title + Content, @Keywords, ' ') AS Matches, [User].Name 
+            SearchResultModel result = new SearchResultModel();
+            string query = @"SELECT *, Count(*) Over() AS Count 
+                             FROM (
+                                 SELECT [HelpRequest].Id, [HelpRequest].Title, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [dbo].KeywordMatches(Title + Content, @Keywords, ' ') AS Matches, [User].Name, [Application].Status 
                                  FROM [HelpRequest] 
                                  JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
+                                 LEFT JOIN [Application] ON [HelpRequest].Id = [Application].HelpRequestId AND [Application].VolunteerId = @UserId 
                                  WHERE [HelpRequest].Closed = 0
                              ) h
                              WHERE Matches > 0
-                             ORDER BY " + orderString(order);
+                             ORDER BY " + orderString(order) + " "
+                         + @"OFFSET @Skip ROWS
+                             FETCH NEXT 10 ROWS ONLY;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@Keywords", keywords);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@Skip", skip);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        results.Add(new HelpRequestModel
+                        result.Count = reader.GetInt32(8);
+                        HelpRequestModel helpRequest = new HelpRequestModel
                         {
                             Id = reader.GetInt32(0),
                             Title = reader.GetString(1),
@@ -97,35 +118,50 @@ namespace EyeCTforParticipation.Data
                             {
                                 Name = reader.GetString(6)
                             }
-                        });
+                        };
+                        if (!reader.IsDBNull(7))
+                        {
+                            helpRequest.Application = new ApplicationModel
+                            {
+                                Status = (ApplicationStatus)reader.GetInt32(7)
+                            };
+                        }
+                        result.Results.Add(helpRequest);
                     }
                 }
             }
-            return results;
+            return result;
         }
 
-        public List<HelpRequestModel> Search(GeoCoordinate location, int distance, SearchOrder order)
+        public SearchResultModel Search(GeoCoordinate location, int distance, SearchOrder order, int userId, int skip)
         {
-            List<HelpRequestModel> results = new List<HelpRequestModel>();
-            string query = @"SELECT * FROM (
-                                SELECT [HelpRequest].Id, Title, Date, Address, Urgency, Location.STDistance(geography::STPointFromText(@Location, 4326)) AS Distance, [User].Name 
+            SearchResultModel result = new SearchResultModel();
+            string query = @"SELECT *, Count(*) Over() AS Count 
+                             FROM (
+                                SELECT [HelpRequest].Id, Title, [HelpRequest].Date, Address, Urgency, Location.STDistance(geography::STPointFromText(@Location, 4326)) AS Distance, [User].Name, [Application].Status 
                                 FROM [HelpRequest] 
                                 JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
+                                LEFT JOIN [Application] ON [HelpRequest].Id = [Application].HelpRequestId AND [Application].VolunteerId = @UserId 
                                 WHERE [HelpRequest].Closed = 0
                              ) h 
                              WHERE (Distance <= @Distance * 1000 OR @Distance = 0)
-                             ORDER BY " + orderString(order);
+                             ORDER BY " + orderString(order) + " "
+                         + @"OFFSET @Skip ROWS
+                             FETCH NEXT 10 ROWS ONLY;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@Location", "POINT(" + location.Longitude + " " + location.Latitude + ")");
                 cmd.Parameters.AddWithValue("@Distance", distance);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@Skip", skip);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        results.Add(new HelpRequestModel
+                        result.Count = reader.GetInt32(8);
+                        HelpRequestModel helpRequest = new HelpRequestModel
                         {
                             Id = reader.GetInt32(0),
                             Title = reader.GetString(1),
@@ -137,24 +173,36 @@ namespace EyeCTforParticipation.Data
                             {
                                 Name = reader.GetString(6)
                             }
-                        });
+                        };
+                        if (!reader.IsDBNull(7))
+                        {
+                            helpRequest.Application = new ApplicationModel
+                            {
+                                Status = (ApplicationStatus)reader.GetInt32(7)
+                            };
+                        }
+                        result.Results.Add(helpRequest);
                     }
                 }
             }
-            return results;
+            return result;
         }
         
-        public List<HelpRequestModel> Search(string keywords, GeoCoordinate location, int distance, SearchOrder order)
+        public SearchResultModel Search(string keywords, GeoCoordinate location, int distance, SearchOrder order, int userId, int skip)
         {
-            List<HelpRequestModel> results = new List<HelpRequestModel>();
-            string query = @"SELECT * FROM (
-                                 SELECT [HelpRequest].Id, Title, Date, Address, Urgency, [dbo].KeywordMatches(Title + Content, @Keywords, ' ') AS Matches, Location.STDistance(geography::STPointFromText(@Location, 4326)) AS Distance, [User].Name 
+            SearchResultModel result = new SearchResultModel();
+            string query = @"SELECT *, Count(*) Over() AS Count 
+                             FROM (
+                                 SELECT [HelpRequest].Id, Title, [HelpRequest].Date, Address, Urgency, [dbo].KeywordMatches(Title + Content, @Keywords, ' ') AS Matches, Location.STDistance(geography::STPointFromText(@Location, 4326)) AS Distance, [User].Name, [Application].Status 
                                  FROM [HelpRequest] 
                                  JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
+                                 LEFT JOIN [Application] ON [HelpRequest].Id = [Application].HelpRequestId AND [Application].VolunteerId = @UserId 
                                  WHERE [HelpRequest].Closed = 0
                              ) h
                              WHERE Matches > 0 AND (Distance <= @Distance * 1000 OR @Distance = 0)
-                             ORDER BY " + orderString(order);
+                             ORDER BY " + orderString(order) + " "
+                         + @"OFFSET @Skip ROWS
+                             FETCH NEXT 10 ROWS ONLY;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
@@ -162,11 +210,14 @@ namespace EyeCTforParticipation.Data
                 cmd.Parameters.AddWithValue("@Keywords", keywords);
                 cmd.Parameters.AddWithValue("@Location", "POINT(" + location.Longitude + " " + location.Latitude + ")");
                 cmd.Parameters.AddWithValue("@Distance", distance);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@Skip", skip);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        results.Add(new HelpRequestModel
+                        result.Count = reader.GetInt32(9);
+                        HelpRequestModel helpRequest = new HelpRequestModel
                         {
                             Id = reader.GetInt32(0),
                             Title = reader.GetString(1),
@@ -178,17 +229,25 @@ namespace EyeCTforParticipation.Data
                             {
                                 Name = reader.GetString(7)
                             }
-                        });
+                        };
+                        if (!reader.IsDBNull(8))
+                        {
+                            helpRequest.Application = new ApplicationModel
+                            {
+                                Status = (ApplicationStatus)reader.GetInt32(8)
+                            };
+                        }
+                        result.Results.Add(helpRequest);
                     }
                 }
             }
-            return results;
+            return result;
         }
 
         public HelpRequestModel Get(int id)
         {
             HelpRequestModel result = null;
-            string query = @"SELECT [HelpRequest].HelpSeekerUserId, [User].Name, [HelpRequest].Title, [HelpRequest].Content, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [HelpRequest].Closed 
+            string query = @"SELECT [HelpRequest].HelpSeekerUserId, [User].Name, [HelpRequest].Title, [HelpRequest].Content, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [HelpRequest].Closed
                              FROM [HelpRequest] 
                              JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
                              WHERE [HelpRequest].Id = @Id";
@@ -221,7 +280,53 @@ namespace EyeCTforParticipation.Data
             }
             return result;
         }
-        
+
+        public HelpRequestModel Get(int id, int userId)
+        {
+            HelpRequestModel result = null;
+            string query = @"SELECT [HelpRequest].HelpSeekerUserId, [User].Name, [HelpRequest].Title, [HelpRequest].Content, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [Application].Id, [Application].Status 
+                             FROM [HelpRequest] 
+                             JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
+                             LEFT JOIN [Application] ON [HelpRequest].Id = [Application].HelpRequestId AND [Application].VolunteerId = @UserId 
+                             WHERE [HelpRequest].Id = @Id AND [HelpRequest].Closed = 0";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        result = new HelpRequestModel
+                        {
+                            Id = id,
+                            HelpSeeker = new UserModel
+                            {
+                                Id = reader.GetInt32(0),
+                                Name = reader.GetString(1)
+                            },
+                            Title = reader.GetString(2),
+                            Content = reader.GetString(3),
+                            Date = reader.GetDateTime(4),
+                            Address = reader.GetString(5),
+                            Urgency = (HelpRequestUrgency)reader.GetInt32(6)
+                        };
+                        if (!reader.IsDBNull(7))
+                        {
+                            result.Application = new ApplicationModel
+                            {
+                                Id = reader.GetInt32(7),
+                                Status = (ApplicationStatus)reader.GetInt32(8)
+                            };
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
         public List<HelpRequestModel> GetFromHelpSeeker(int userId)
         {
             List<HelpRequestModel> results = new List<HelpRequestModel>();
@@ -434,40 +539,48 @@ namespace EyeCTforParticipation.Data
             }
         }
 
-        public List<ApplicationModel> GetApplications(int volunteerId)
+        public List<HelpRequestModel> GetApplications(int volunteerId)
         {
-            List<ApplicationModel> applications = new List<ApplicationModel>();
-            string query = @"SELECT [Application].Id, [HelpRequest].Id, [HelpRequest].Title, [HelpRequest].Urgency, [HelpRequest].Closed, [Application].Status, [Application].Date 
-                             FROM [Application] 
-                             JOIN [HelpRequest] ON [Application].HelpRequestId = [HelpRequest].Id 
-                             WHERE [Application].VolunteerId = @VolunteerId AND [Application].Status != @Cancelled;";
+            List<HelpRequestModel> results = new List<HelpRequestModel>();
+            string query = @"SELECT [HelpRequest].Id, [HelpRequest].Title, [HelpRequest].Date, [HelpRequest].Address, [HelpRequest].Urgency, [User].Name, [Application].Status
+                             FROM [HelpRequest] 
+                             JOIN [User] ON [HelpRequest].HelpSeekerUserId = [User].Id 
+                             JOIN [Application] ON [HelpRequest].Id = [Application].HelpRequestId AND [Application].VolunteerId = @volunteerId AND [Application].Status != 3 
+                             WHERE [HelpRequest].Closed = 0 
+                             ORDER BY [HelpRequest].Date DESC;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
-                cmd.Parameters.AddWithValue("@VolunteerId", volunteerId);
-                cmd.Parameters.AddWithValue("@Cancelled", (int)ApplicationStatus.CANCELLED);
+                cmd.Parameters.AddWithValue("@volunteerId", volunteerId);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        applications.Add(new ApplicationModel
+                        HelpRequestModel result = new HelpRequestModel
                         {
                             Id = reader.GetInt32(0),
-                            HelpRequest = new HelpRequestModel
+                            Title = reader.GetString(1),
+                            Date = reader.GetDateTime(2),
+                            Address = reader.GetString(3),
+                            Urgency = (HelpRequestUrgency)reader.GetInt32(4),
+                            HelpSeeker = new UserModel
                             {
-                                Id = reader.GetInt32(1),
-                                Title = reader.GetString(2),
-                                Urgency = (HelpRequestUrgency)reader.GetInt32(3),
-                                Closed = reader.GetBoolean(4)
-                            },
-                            Status = (ApplicationStatus)reader.GetInt32(5),
-                            Date = reader.GetDateTime(6)
-                        });
+                                Name = reader.GetString(5)
+                            }
+                        };
+                        if (!reader.IsDBNull(6))
+                        {
+                            result.Application = new ApplicationModel
+                            {
+                                Status = (ApplicationStatus)reader.GetInt32(6)
+                            };
+                        }
+                        results.Add(result);
                     }
                 }
             }
-            return applications;
+            return results;
         }
 
         public List<ApplicationModel> GetApplications(int id, int helpSeekerId)

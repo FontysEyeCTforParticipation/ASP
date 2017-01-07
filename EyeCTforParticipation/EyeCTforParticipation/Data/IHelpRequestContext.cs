@@ -10,11 +10,12 @@ namespace EyeCTforParticipation.Data
 {
     interface IHelpRequestContext
     {
-        List<HelpRequestModel> Search(SearchOrder order);
-        List<HelpRequestModel> Search(string keywords, SearchOrder order);
-        List<HelpRequestModel> Search(GeoCoordinate location, int distance, SearchOrder order);
-        List<HelpRequestModel> Search(string keywords, GeoCoordinate location, int distance, SearchOrder order);
+        SearchResultModel Search(SearchOrder order, int userId, int skip);
+        SearchResultModel Search(string keywords, SearchOrder order, int userId, int skip);
+        SearchResultModel Search(GeoCoordinate location, int distance, SearchOrder order, int userId, int skip);
+        SearchResultModel Search(string keywords, GeoCoordinate location, int distance, SearchOrder order, int userId, int skip);
         HelpRequestModel Get(int id);
+        HelpRequestModel Get(int id, int userId);
         List<HelpRequestModel> GetFromHelpSeeker(int userId);
         int Create(HelpRequestModel helpRequest);
         void Update(HelpRequestModel helpRequest);
@@ -24,7 +25,7 @@ namespace EyeCTforParticipation.Data
         void Apply(int id, int volunteerId);
         void CancelApplication(int id, int volunteerId);
         void CancelApplicationAsHelpSeeker(int id, int userId);
-        List<ApplicationModel> GetApplications(int volunteerId);
+        List<HelpRequestModel> GetApplications(int volunteerId);
         List<ApplicationModel> GetApplications(int id, int helpSeekerId);
         int ApplicationsCount(int id, int helpSeekerId);
         bool HasApplied(int id, int volunteerId);

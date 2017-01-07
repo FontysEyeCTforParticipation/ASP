@@ -12,46 +12,17 @@ namespace EyeCTforParticipation.Data
 {
     class UserSQLContext : IUserContext
     {
-        public UserModel Login(string rfid)
+        public UserModel Get(int userId)
         {
             UserModel result = null;
-            string query = @"SELECT Id, Role, Name, Approved, Zoom
+            string query = @"SELECT Id, Role, Name, Password, Approved, Zoom, Birthdate, Email
                              FROM [User] 
-                             WHERE RFID = @RFID;";
+                             WHERE Id = @Id;";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
-                cmd.Parameters.AddWithValue("@RFID", rfid);
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        result = new UserModel
-                        {
-                            Id = reader.GetInt32(0),
-                            Role = (UserRole)reader.GetInt32(1),
-                            Name = reader.GetString(2),
-                            Approved = reader.GetBoolean(3),
-                            Zoom = reader.GetInt32(4)
-                        };
-                    }
-                }
-            }
-            return result;
-        }
-
-        public UserModel LoginPassword(string email)
-        {
-            UserModel result = null;
-            string query = @"SELECT Id, Role, Name, Password, Approved, Zoom, Birthdate
-                             FROM [User] 
-                             WHERE Email = @Email;";
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                conn.Open();
-                cmd.Parameters.AddWithValue("@Email", email);
+                cmd.Parameters.AddWithValue("@Id", userId);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     if (reader.Read())
@@ -64,9 +35,79 @@ namespace EyeCTforParticipation.Data
                             Password = reader.GetString(3),
                             Approved = reader.GetBoolean(4),
                             Zoom = reader.GetInt32(5),
-                            Birthdate = reader.GetDateTime(6)
+                            Birthdate = reader.GetDateTime(6),
+                            Email = reader.GetString(7)
                         };
                     }
+                }
+            }
+            return result;
+        }
+
+        public VolunteerModel GetVolunteer(int userId)
+        {
+            VolunteerModel result = null;
+            string query = @"SELECT About, Address, Location.Long, Location.Lat, DriversLicense, Car
+                             FROM Volunteer
+                             WHERE Id = @Id;";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@Id", userId);
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        result = new VolunteerModel
+                        {
+                            About = reader.GetString(0),
+                            Address = reader.GetString(1),
+                            Location = new GeoCoordinate
+                            {
+                                Longitude = reader.GetDouble(2),
+                                Latitude = reader.GetDouble(3)
+                            },
+                            DriversLicense = reader.GetBoolean(4),
+                            Car = reader.GetBoolean(5)
+                        };
+                    }
+                }
+            }
+            return result;
+        }
+
+        public UserModel Login(string rfid)
+        {
+            UserModel result = null;
+            string query = @"SELECT Id
+                             FROM [User] 
+                             WHERE RFID = @RFID;";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@RFID", rfid);
+                result = Get((int)cmd.ExecuteScalar());
+            }
+            return result;
+        }
+
+        public UserModel LoginPassword(string email)
+        {
+            UserModel result = null;
+            string query = @"SELECT Id
+                             FROM [User] 
+                             WHERE Email = @Email;";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@Email", email);
+                int? id = (int?)cmd.ExecuteScalar();
+                if (id.HasValue)
+                {
+                    result = Get(id.Value);
                 }
             }
             return result;
@@ -141,10 +182,31 @@ namespace EyeCTforParticipation.Data
                 cmd.ExecuteNonQuery();
             }
         }
+
+        public void VolunteerProfile(string address, GeoCoordinate location, bool driversLicense, bool car, string about, int userId)
+        {
+            string query = @"UPDATE [Volunteer] 
+                             SET Address = @Address, Location = geography::STPointFromText(@Location, 4326), DriversLicense = @DriversLicense, Car = @Car, About = @about
+                             WHERE Id = @Id;";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@Address", address);
+                cmd.Parameters.AddWithValue("@Location", "POINT(" + location.Longitude + " " + location.Latitude + ")");
+                cmd.Parameters.AddWithValue("@DriversLicense", driversLicense);
+                cmd.Parameters.AddWithValue("@Car", car);
+                cmd.Parameters.AddWithValue("@About", about);
+                cmd.Parameters.AddWithValue("@Id", userId);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         public void Delete(int Id)
         {
             throw new NotImplementedException();
         }
+
         public void AddHelpSeeker(int helpSeekerId, int aidWorkerId)
         {
             string query = @"INSERT INTO [HelpSeekerAidWorker] 
@@ -246,29 +308,6 @@ namespace EyeCTforParticipation.Data
             return results;
         }
 
-        public GeoCoordinate GetVolunteerLocation(int userId)
-        {
-            GeoCoordinate location = new GeoCoordinate();
-            string query = @"SELECT Location.Long, Location.Lat
-                             FROM Volunteer
-                             WHERE Id = @Id;";
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                conn.Open();
-                cmd.Parameters.AddWithValue("@Id", userId);
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        location.Longitude = reader.GetDouble(0);
-                        location.Latitude = reader.GetDouble(1);
-                    }
-                }
-            }
-            return location;
-        }
-
         public List<UserModel> Get()
         {
             List<UserModel> results = new List<UserModel>();
@@ -312,7 +351,41 @@ namespace EyeCTforParticipation.Data
             }
         }
 
-        public void Password(string password, int userId)
+        public string Token(string token)
+        {
+            string data = null;
+            string query = @"SELECT Data
+                             FROM [EmailConfirm]
+                             WHERE Token = @Token AND Date >= DateAdd(day,-1,GETDATE());
+                             DELETE FROM [EmailConfirm]
+                             WHERE Token = @Token";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@Token", token);
+                data = cmd.ExecuteScalar().ToString();
+            }
+            return data;
+        }
+        public void Token(string token, string data)
+        {
+            string query = @"INSERT INTO [EmailConfirm]
+                             (Token, Data, Date)
+                             VALUES(@Token, @Data, GETDATE());
+                             DELETE FROM [EmailConfirm]
+                             WHERE Date < DateAdd(day,-1,GETDATE());";
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@Token", token);
+                cmd.Parameters.AddWithValue("@Data", data);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public bool Password(string hash, int userId)
         {
             string query = @"UPDATE [User] 
                              SET Password = @Password
@@ -321,9 +394,9 @@ namespace EyeCTforParticipation.Data
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 conn.Open();
-                cmd.Parameters.AddWithValue("@Password", password);
+                cmd.Parameters.AddWithValue("@Password", hash);
                 cmd.Parameters.AddWithValue("@Id", userId);
-                cmd.ExecuteNonQuery();
+                return cmd.ExecuteNonQuery() > 0 ? true : false;
             }
         }
     }

@@ -1,0 +1,168 @@
+﻿@using EyeCTforParticipation.Models;
+
+@{
+    ViewBag.Title = "Zoeken";
+    ViewBag.Scripts = new string[]
+    {
+        "chat",
+        "jquery.simplePagination.min"
+    };
+    ViewBag.Nav = new NavModel[]
+    {
+        new NavModel
+        {
+            Title = "Zoeken",
+            Href = "search",
+            Current = true
+        },
+        new NavModel
+        {
+            Title = "Hulpvragen",
+            Href = "helprequests"
+        },
+        new NavModel
+        {
+            Title = "Account",
+            Href = "account"
+        }
+    };
+
+    string keywords = (string)Model["keywords"];
+    keywords = keywords != null ? keywords : "";
+    string postalCode = (string)Model["postalCode"];
+    postalCode = keywords != null ? postalCode : "";
+    int distance = (int)Model["distance"];
+    int order = (int)Model["order"];
+    int page = (int)Model["page"];
+
+    SearchResultModel result = (SearchResultModel)Model["result"];
+}
+
+<header>
+    <h2>Zoeken</h2>
+    <form class="search_form">
+        <input type="text" name="keywords" value="@keywords" class="input search_input" placeholder="Trefwoorden" />
+        <input type="text" name="postalCode" value="@postalCode" class="input postalcode_input" placeholder="Postcode" />
+        @{
+            List<SelectListItem> distances = new List<SelectListItem>()
+            {
+               new SelectListItem { Value = "" , Text = "Alle afstanden" },
+               new SelectListItem { Value = "10" , Text = "< 3 km" },
+               new SelectListItem { Value = "10" , Text = "< 5 km" },
+               new SelectListItem { Value = "10" , Text = "< 10 km" },
+               new SelectListItem { Value = "15" , Text = "< 15 km" },
+               new SelectListItem { Value = "25" , Text = "< 25 km" },
+               new SelectListItem { Value = "50" , Text = "< 50 km" },
+               new SelectListItem { Value = "75" , Text = "< 75 km" }
+            };
+            foreach(SelectListItem item in distances)
+            {
+                if(item.Value == distance.ToString())
+                {
+                    item.Selected = true;
+                }
+            }
+            @Html.DropDownList("distance", distances, new
+            {
+                @class = "input"
+            });
+
+            List<SelectListItem> orders = new List<SelectListItem>()
+            {
+               new SelectListItem { Value = "0" , Text = "Datum (oplopend)" },
+               new SelectListItem { Value = "1" , Text = "Datum (aflopend)" },
+               new SelectListItem { Value = "2" , Text = "Afstand (oplopend)" },
+               new SelectListItem { Value = "3" , Text = "Afstand (aflopend)" },
+               new SelectListItem { Value = "4" , Text = "Relevantie (oplopend)" },
+               new SelectListItem { Value = "5" , Text = "Relevantie (aflopend)" }
+            };
+            foreach (SelectListItem item in orders)
+            {
+                if (item.Value == order.ToString())
+                {
+                    item.Selected = true;
+                }
+            }
+            @Html.DropDownList("order", orders, new {
+                @class = "input"
+            });
+        }
+        <input type="hidden" name="page" value="@page" />
+        <button class="primary_button search_button"><i class="material-icons">&#xE8B6;</i></button>
+    </form>
+</header>
+<table class="search_results">
+    <tr>
+        <th><h3>Titel</h3></th>
+        <th><h3>Gebruiker</h3></th>
+        <th><h3>Datum</h3></th>
+        <th><h3>Locatie</h3></th>
+        <th><h3>Afstand</h3></th>
+    </tr>
+    @foreach (HelpRequestModel helpRequest in result.Results)
+    {
+        string urgency = "";
+        switch (helpRequest.Urgency)
+        {
+            case HelpRequestUrgency.LOW:
+                urgency = "<span class=\"urgency_low\">Belangrijk</span>";
+                break;
+            case HelpRequestUrgency.NORMAL:
+                urgency = "<span class=\"urgency_normal\">Urgent</span>";
+                break;
+            case HelpRequestUrgency.CRITICAL:
+                urgency = "<span class=\"urgency_critical\">Zeer urgent</span>";
+                break;
+        }
+        if (helpRequest.Application != null)
+        {
+            switch (helpRequest.Application.Status)
+            {
+                case ApplicationStatus.NONE:
+                    urgency = "<span class=\"applied\"><i class=\"material-icons\">&#xE145;</i><i>Aangemeld</i></span>";
+                    break;
+                case ApplicationStatus.INTERVIEW:
+                    urgency = "<span class=\"interview\"><i class=\"material-icons\">&#xE7FB;</i><i>Kennismaken</i></span>";
+                    break;
+                case ApplicationStatus.APPROVED:
+                    urgency = "<span class=\"approved\"><i class=\"material-icons\">&#xE5CA;</i><i>Goedgekeurd</i></span>";
+                    break;
+            }
+        }
+
+        <tr data-id="@helpRequest.Id">
+            <td>
+                <h4>@Html.Raw(urgency + helpRequest.Title)</h4>
+            </td>
+            <td>@helpRequest.HelpSeeker.Name</td>
+            <td>@helpRequest.Date.ToString("dd-MM-yyyy")</td>
+            <td>@helpRequest.Address</td>
+            <td>@Math.Round(helpRequest.Distance / 1000) km</td>
+        </tr>
+    }
+</table>
+<div class="pagination"></div>
+@if (result.Count == 0)
+{
+    <p class="info">Er zijn geen zoekresultaten.</p>
+} else
+{
+    ViewBag.Html = "<script type=\"text/javascript\">"
+                 + "$(function() {"
+                     + "$(\".pagination\").pagination({"
+                         + "items: " + result.Count + ","
+                         + "itemsOnPage: 10,"
+                         + "currentPage: " + page + ","
+                         + "displayedPages: 14,"
+                         + "edges: 0,"
+                         + "selectOnClick: false,"
+                         + "prevText: \"<i class=\\\"material-icons\\\">&#xE408;</i>\","
+                         + "nextText: \"<i class=\\\"material-icons\\\">&#xE409;</i>\","
+                         + "onPageClick: function(page, e) {"
+                            + "e.preventDefault();"
+                            +"$(\".search_form input[name=page]\").val(page).parent()[0].submit();"
+                         + "}"
+                     + "});"
+                 + "});"
+                 + "</script>";
+}
